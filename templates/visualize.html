@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/train.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Data Visualization</h2>
+        <form method="POST" class="mt-4">
+            <div class="form-group">
+                <label for="plot_type">Select Plot Type:</label>
+                <select name="plot_type" id="plot_type" class="form-control" required>
+                    <option value="scatter">Scatter Plot</option>
+                    <option value="line">Line Plot</option>
+                    <option value="bar">Bar Plot</option>
+                    <option value="histogram">Histogram</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="x_column">Select X Column:</label>
+                <select name="x_column" id="x_column" class="form-control">
+                    {% for column in columns %}
+                        <option value="{{ column }}">{{ column }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="y_column">Select Y Column:</label>
+                <select name="y_column" id="y_column" class="form-control">
+                    {% for column in columns %}
+                        <option value="{{ column }}">{{ column }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Generate Plot</button>
+        </form>
+
+        {% if plot_url %}
+            <h3 class="mt-5">Generated Plot:</h3>
+            <img src="data:image/png;base64,{{ plot_url }}" alt="Plot" class="img-fluid mt-3">
+        {% endif %}
+
+        {% if plot_url %}
+            <form method="POST" action="{{ url_for('train_model') }}" class="mt-4">
+                <button type="submit" class="btn btn-success">Proceed to Train Model</button>
+            </form>
+        {% endif %}
+    </div>
+</body>
+</html>

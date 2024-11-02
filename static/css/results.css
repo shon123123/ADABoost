@@ -1,0 +1,43 @@
+body {
+    background-color: #f4f7fa; /* Light gray background */
+    font-family: 'Arial', sans-serif; /* Clean font */
+    margin: 0;
+    padding: 20px; /* Spacing around the body */
+}
+
+h1 {
+    color: #007bff; /* Bright blue color for the main title */
+    margin-bottom: 20px; /* Space below the title */
+}
+
+h3 {
+    color: #343a40; /* Dark gray for subheadings */
+}
+
+ul {
+    list-style-type: none; /* Remove bullet points from list */
+    padding: 0; /* Remove padding from list */
+}
+
+li {
+    background-color: #ffffff; /* White background for list items */
+    padding: 10px; /* Padding inside list items */
+    border: 1px solid #dee2e6; /* Light border around list items */
+    border-radius: 4px; /* Rounded corners for list items */
+    margin-bottom: 10px; /* Space between list items */
+}
+
+a {
+    display: inline-block; /* Display links as block elements for padding */
+    margin-top: 20px; /* Space above links */
+    color: #007bff; /* Link color */
+    text-decoration: none; /* Remove underline */
+    border: 1px solid #007bff; /* Border for the link */
+    padding: 10px 15px; /* Padding around the link */
+    border-radius: 4px; /* Rounded corners for links */
+    transition: background-color 0.3s; /* Smooth background color transition */
+}
+
+a:hover {
+    background-color: rgba(0, 123, 255, 0.1); /* Light background on hover */
+}

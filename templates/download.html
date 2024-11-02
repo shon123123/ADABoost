@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Evaluation Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Model Evaluation Results</h2>
+        <ul class="list-group mt-4">
+            <li class="list-group-item">Accuracy: {{ evaluation['accuracy'] }}</li>
+            <li class="list-group-item">Precision: {{ evaluation['precision'] }}</li>
+            <li class="list-group-item">Recall: {{ evaluation['recall'] }}</li>
+        </ul>
+
+        <form method="POST" class="mt-4">
+            <div class="form-group">
+                <label for="output_format">Select Output Format:</label>
+                <select name="output_format" id="output_format" class="form-control">
+                    <option value="csv">CSV</option>
+                    <option value="xlsx">Excel</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Download</button>
+        </form>
+    </div>
+</body>
+</html>

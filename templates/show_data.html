@@ -1,0 +1,24 @@
+<!-- templates/show_data.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>Uploaded Data Preview</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            {% for column in first_five_rows.columns %}
+                <th>{{ column }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for index, row in first_five_rows.iterrows() %}
+        <tr>
+            {% for value in row %}
+                <td>{{ value }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('preprocess_data') }}" class="btn btn-primary">Proceed to Preprocess Data</a>
+{% endblock %}

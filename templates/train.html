@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/train_model.css') }}"> <!-- Link to the new CSS file -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Select Target Column and Train Model</h2>
+        <form method="POST" class="mt-4">
+            <!-- Dropdown for Target Column Selection -->
+            <div class="form-group">
+                <label for="target_column">Select Target Column:</label>
+                <select name="target_column" id="target_column" class="form-control" required>
+                    {% for column in columns %}
+                        <option value="{{ column }}">{{ column }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Inputs for Model Parameters -->
+            <div class="form-group">
+                <label for="learning_rate">Learning Rate:</label>
+                <input type="number" name="learning_rate" id="learning_rate" class="form-control" step="0.01" value="1.0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="n_estimators">Number of Estimators:</label>
+                <input type="number" name="n_estimators" id="n_estimators" class="form-control" value="50" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Train Model</button>
+        </form>
+    </div>
+</body>
+</html>

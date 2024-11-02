@@ -1,0 +1,61 @@
+body {
+    background-color: #f4f7fa; /* Light gray background */
+    font-family: 'Arial', sans-serif; /* Clean font */
+}
+
+.container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    background-color: #ffffff; /* White background for content */
+    padding: 20px; /* Spacing around content */
+}
+
+.navbar {
+    background-color: #007bff; /* Bright blue background */
+    color: #ffffff; /* White text for contrast */
+    padding: 10px 20px; /* Padding for spacing */
+}
+
+.navbar a {
+    color: #ffffff; /* White text for links */
+    text-decoration: none; /* Remove underline */
+    padding: 10px 15px; /* Spacing around links */
+    background-color: transparent; /* Default background for links */
+    border-radius: 4px; /* Rounded corners for links */
+    transition: background-color 0.3s; /* Smooth background color transition */
+}
+
+.navbar a:hover {
+    background-color: rgba(255, 255, 255, 0.2); /* Light background on hover */
+}
+
+.navbar a.active {
+    background-color: rgba(255, 255, 255, 0.3); /* Slightly darker for active links */
+}
+
+h1, h2, h3 {
+    color: #343a40; /* Dark gray for headings */
+}
+
+.alert {
+    margin-top: 20px; /* Space above alert messages */
+}
+
+.btn {
+    margin-top: 10px; /* Space above buttons */
+}
+
+.form-group {
+    margin-bottom: 15px; /* Space below form groups */
+}
+
+footer {
+    margin-top: 20px; /* Space above footer */
+    padding: 10px 0; /* Padding inside footer */
+    text-align: center; /* Centered text */
+    background-color: #343a40; /* Dark gray for footer */
+    border-top: 1px solid #6c757d; /* Border at the top */
+    color: #ffffff; /* White text for footer */
+}
