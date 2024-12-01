@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Post-Training Analysis{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Post-Training Analysis</h1>
+
+    <!-- Form for selecting pos_label -->
+    <form method="POST" action="{{ url_for('post_training') }}">
+        <div class="form-group">
+            <label for="pos_label">Select Positive Label:</label>
+            <select class="form-control" id="pos_label" name="pos_label">
+                <option value="">-- Select --</option>
+                {% for value in unique_values %}
+                    <option value="{{ value }}" {% if value == selected_pos_label %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Graphs</button>
+    </form>
+
+    {% if cm_url and roc_url %}
+        <!-- Confusion Matrix -->
+        <div class="card my-4">
+            <div class="card-header">
+                <h2>Confusion Matrix</h2>
+            </div>
+            <div class="card-body">
+                <img src="data:image/png;base64,{{ cm_url }}" alt="Confusion Matrix" class="img-fluid">
+            </div>
+        </div>
+
+        <!-- ROC Curve -->
+        <div class="card my-4">
+            <div class="card-header">
+                <h2>ROC Curve</h2>
+            </div>
+            <div class="card-body">
+                <img src="data:image/png;base64,{{ roc_url }}" alt="ROC Curve" class="img-fluid">
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Navigation Buttons -->
+    <div class="text-center">
+        <a href="{{ url_for('train_model') }}" class="btn btn-primary">Train Again</a>
+        <a href="{{ url_for('download_results') }}" class="btn btn-success">Download Results</a>
+    </div>
+</div>
+{% endblock %}
