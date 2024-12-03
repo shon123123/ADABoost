@@ -23,6 +23,13 @@
                     <option value="remove">Remove Rows</option>
                 </select>
             </div>
+            <label for="target_column">Select Target Column:</label>
+    <select name="target_column" id="target_column" required class="form-control">
+        <option value="">-- Select a target column --</option>
+        {% for column in columns %}
+            <option value="{{ column }}">{{ column }}</option>
+        {% endfor %}
+    </select>
             <div class="form-group">
                 <label for="scaling_method">Scaling Method:</label>
                 <select class="form-control" id="scaling_method" name="scaling_method">

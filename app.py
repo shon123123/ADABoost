@@ -51,12 +51,13 @@ def show_uploaded_data():
 
 @app.route('/preprocess', methods=['GET', 'POST'])
 def preprocess_data():
-    global data, preprocessed_data
+    global data, preprocessed_data , target_column
     if data is None:
         flash("No data uploaded. Please upload data first.", "warning")
         return redirect(url_for('upload_data'))
 
     if request.method == 'POST':
+        target_column = request.form.get('target_column')  # Get the target column from the form
         columns_to_remove = request.form.getlist('columns_to_remove')
         missing_strategy = request.form.get('missing_strategy')
         scaling_method = request.form.get('scaling_method')
@@ -71,6 +72,15 @@ def preprocess_data():
             imputer = SimpleImputer(strategy=missing_strategy)
             data[:] = imputer.fit_transform(data)
 
+        # Separate target column from features
+        if target_column and target_column in data.columns:
+            features = data.drop(target_column, axis=1)
+            target = data[target_column]
+        else:
+            flash("Please select a valid target column.", "danger")
+            return redirect(url_for('preprocess_data'))
+
+        # Apply scaling only to feature columns
         if scaling_method == "standard":
             scaler = StandardScaler()
         elif scaling_method == "minmax":
@@ -79,9 +89,11 @@ def preprocess_data():
             scaler = None
         
         if scaler:
-            data[:] = scaler.fit_transform(data)
+            features[:] = scaler.fit_transform(features)
 
-        preprocessed_data = data
+        # Combine features and target back into a single DataFrame
+        preprocessed_data = pd.concat([features, target], axis=1)
+
         return redirect(url_for('visualize_data'))
 
     return render_template("preprocess.html", title="Preprocess Data", columns=data.columns)
@@ -145,7 +157,7 @@ def visualize_data():
 
 @app.route('/train', methods=['GET', 'POST'])
 def train_model():
-    global preprocessed_data, evaluation, model, X_test, y_test , predictions
+    global preprocessed_data, evaluation, model, X_test, y_test , predictions, target_column
     if preprocessed_data is None:
         flash("Please complete preprocessing and visualization before training.", "warning")
         return redirect(url_for('visualize_data'))
@@ -153,7 +165,7 @@ def train_model():
     columns = preprocessed_data.columns.tolist()
 
     if request.method == 'POST':
-        target_column = request.form.get('target_column')
+        # target_column = request.form.get('target_column')
         learning_rate = request.form.get('learning_rate')
         n_estimators = request.form.get('n_estimators')
 
