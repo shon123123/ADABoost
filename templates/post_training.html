@@ -21,6 +21,20 @@
     </form>
 
     {% if cm_url and roc_url %}
+        <!-- Accuracy and Insights -->
+        <div class="card my-4">
+            <div class="card-header">
+                <h2>Accuracy</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-center display-4">{{ accuracy }}%</p>
+                <p class="text-center">
+                    <strong>Performance:</strong> {{ insight }}
+                </p>
+                <p class="text-center"><strong>Best Number of Estimators: {{ best_n_estimators }}</strong></p>
+            </div>
+        </div>
+
         <!-- Confusion Matrix -->
         <div class="card my-4">
             <div class="card-header">

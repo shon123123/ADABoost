@@ -101,17 +101,59 @@ def preprocess_data():
 
 @app.route('/download', methods=['GET', 'POST'])
 def download_results():
-    global preprocessed_data, evaluation
-    if request.method == 'POST':
-        output_format = request.form.get('output_format')
-        file_path = "processed_data." + ("csv" if output_format == "csv" else "xlsx")
+    global preprocessed_data, evaluation, accuracy, predictions, y_test, target_column
 
-        if output_format == "csv":
-            preprocessed_data.to_csv(file_path, index=False)
-        else:
-            preprocessed_data.to_excel(file_path, index=False)
+    if preprocessed_data is None or evaluation is None:
+        flash("No results available for download. Train the model first.", "warning")
+        return redirect(url_for('train_model'))
+
+    if request.method == 'POST':
+        output_format = request.form.get('output_format', 'csv')  # Default to CSV
+        file_path = "model_inference_report." + ("csv" if output_format == "csv" else "xlsx")
+        # print("<<<<<<<<<<<<<<<<<<log>>>>>>>>>>>>>>>>>>>")
+        # try:
+            # Constructing the report
+        print("<<<<<<<<<<<<<<<<<<log>>>>>>>>>>>>>>>>>>>")
+        report_data = {
+            "Metric": ["Accuracy", "Precision", "Recall"],
+            "Value": [
+                round(evaluation.get("accuracy", 0) * 100, 2),  # Convert accuracy to percentage
+                round(evaluation.get("precision", 0), 2),
+                round(evaluation.get("recall", 0), 2),
+            ]
+        }
+
+        # Add confusion matrix to the report
+        cm = confusion_matrix(y_test, predictions)
+        cm_df = pd.DataFrame(
+            cm,
+            columns=[f"Predicted_{label}" for label in y_test.unique()],
+            index=[f"Actual_{label}" for label in y_test.unique()]
+        )
+        metrics_df = pd.DataFrame(report_data)
+        metrics_df.to_csv(file_path, index=False)
+        with open(file_path, 'a') as f:
+            f.write("\nConfusion Matrix\n")
+        cm_df.to_csv(file_path, mode='a')
+
+
+
+
+        # Combine the metrics and confusion matrix into a single Excel/CSV
+        # with pd.ExcelWriter(file_path) if output_format == "xlsx" else None as writer:
+        #     metrics_df = pd.DataFrame(report_data)
+        #     if output_format == "xlsx":
+        #         metrics_df.to_excel(writer, sheet_name="Metrics", index=False)
+        #         cm_df.to_excel(writer, sheet_name="Confusion Matrix")
+        #     else:
+        #         metrics_df.to_csv(file_path, index=False)
+        #         cm_df.to_csv(file_path, mode='a', index=True)
 
         return send_file(file_path, as_attachment=True)
+
+        # except Exception as e:
+        #     flash(f"Error generating the report: {str(e)}", "danger")
+        #     return redirect(url_for('post_training'))
 
     return render_template("download.html", title="Download Results", evaluation=evaluation)
 
@@ -157,7 +199,7 @@ def visualize_data():
 
 @app.route('/train', methods=['GET', 'POST'])
 def train_model():
-    global preprocessed_data, evaluation, model, X_test, y_test , predictions, target_column
+    global preprocessed_data, evaluation, model, X_test, y_test, predictions, target_column, accuracy, best_n_estimators
     if preprocessed_data is None:
         flash("Please complete preprocessing and visualization before training.", "warning")
         return redirect(url_for('visualize_data'))
@@ -165,17 +207,13 @@ def train_model():
     columns = preprocessed_data.columns.tolist()
 
     if request.method == 'POST':
-        # target_column = request.form.get('target_column')
-        learning_rate = request.form.get('learning_rate')
-        n_estimators = request.form.get('n_estimators')
-
-        if learning_rate is None or n_estimators is None:
-            flash("Learning rate and number of estimators must be provided.", "danger")
-            return redirect(url_for('train_model'))
+        # Retrieve learning rate and max n_estimators from the user
+        learning_rate = request.form.get('learning_rate', 1.0)
+        max_n_estimators = request.form.get('n_estimators', 50)  # Default to 50 if not provided
 
         try:
             learning_rate = float(learning_rate)
-            n_estimators = int(n_estimators)
+            max_n_estimators = int(max_n_estimators)
         except ValueError:
             flash("Please provide valid numbers for learning rate and number of estimators.", "danger")
             return redirect(url_for('train_model'))
@@ -189,22 +227,45 @@ def train_model():
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        model = AdaBoostClassifier(learning_rate=learning_rate, n_estimators=n_estimators)
-        model.fit(X_train, y_train)
+        # Finding the best n_estimators from 1 to max_n_estimators
+        best_accuracy = 0
+        best_n_estimators = 1
+        evaluation_metrics = {}
 
-        predictions = model.predict(X_test)
-        evaluation['accuracy'] = accuracy_score(y_test, predictions)
-        evaluation['precision'] = precision_score(y_test, predictions, average='weighted')
-        evaluation['recall'] = recall_score(y_test, predictions, average='weighted')
+        for n_estimators in range(1, max_n_estimators + 1):  # Iterate from 1 to the user-specified max
+            temp_model = AdaBoostClassifier(learning_rate=learning_rate, n_estimators=n_estimators)
+            temp_model.fit(X_train, y_train)
+            temp_predictions = temp_model.predict(X_test)
+            temp_accuracy = accuracy_score(y_test, temp_predictions)
 
+            if temp_accuracy > best_accuracy:
+                best_accuracy = temp_accuracy
+                best_n_estimators = n_estimators
+                # Save the best model and predictions
+                model = temp_model
+                predictions = temp_predictions
+                accuracy = best_accuracy
+                evaluation_metrics['precision'] = precision_score(y_test, predictions, average='weighted')
+                evaluation_metrics['recall'] = recall_score(y_test, predictions, average='weighted')
+
+        # Save evaluation results
+        evaluation['accuracy'] = best_accuracy
+        evaluation['precision'] = evaluation_metrics['precision']
+        evaluation['recall'] = evaluation_metrics['recall']
+
+        flash(f"Training complete. Best n_estimators: {best_n_estimators}, Accuracy: {best_accuracy:.2f}", "success")
         return redirect(url_for('post_training'))
 
     return render_template("train.html", title="Train Model", columns=columns)
 
+
 @app.route('/post_training', methods=['GET', 'POST'])
 def post_training():
-    global y_test, predictions, model, X_test
-
+    global y_test, predictions, model, X_test,accuracy,best_n_estimators
+    flash(best_n_estimators)
+    print("<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>")
+    print(best_n_estimators)
+    print("<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>")
     if y_test is None or predictions is None:
         flash("No evaluation data available. Train the model first.", "warning")
         return redirect(url_for('train_model'))
@@ -218,6 +279,16 @@ def post_training():
         pos_label = int(pos_label)
 
         try:
+            # Compute accuracy
+            # accuracy = (y_test == predictions).mean() * 100
+            accuracy = accuracy*100
+            if accuracy > 90:
+                insight = "Excellent"
+            elif accuracy > 80:
+                insight = "Good"
+            else:
+                insight = "Average"
+
             # For binary classification or specific class in multiclass
             y_pred_prob = model.predict_proba(X_test)
             if len(y_test.unique()) == 2:  # Binary classification
@@ -254,7 +325,10 @@ def post_training():
                 cm_url=cm_url,
                 roc_url=roc_url,
                 unique_values=y_test.unique(),
-                selected_pos_label=pos_label
+                selected_pos_label=pos_label,
+                accuracy=accuracy,
+                insight=insight,
+                best_n_estimators=best_n_estimators
             )
 
         except Exception as e:
