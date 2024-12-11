@@ -48,8 +48,8 @@
         {% endif %}
 
         {% if plot_url %}
-            <form method="POST" action="{{ url_for('train_model') }}" class="mt-4">
-                <button type="submit" class="btn btn-success">Proceed to Train Model</button>
+            <form method="GET" action="{{ url_for('train_model') }}" class="mt-4">
+                <button type="submit" class="btn btn-success">Train Model</button>
             </form>
         {% endif %}
     </div>

@@ -6,7 +6,9 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_curve, auc, confusion_matrix, ConfusionMatrixDisplay,roc_auc_score
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
+matplotlib.use('Agg')
 import io
 import base64
 import os
@@ -200,6 +202,7 @@ def visualize_data():
 @app.route('/train', methods=['GET', 'POST'])
 def train_model():
     global preprocessed_data, evaluation, model, X_test, y_test, predictions, target_column, accuracy, best_n_estimators
+
     if preprocessed_data is None:
         flash("Please complete preprocessing and visualization before training.", "warning")
         return redirect(url_for('visualize_data'))
@@ -207,32 +210,31 @@ def train_model():
     columns = preprocessed_data.columns.tolist()
 
     if request.method == 'POST':
-        # Retrieve learning rate and max n_estimators from the user
+        # Retrieve user inputs
         learning_rate = request.form.get('learning_rate', 1.0)
-        max_n_estimators = request.form.get('n_estimators', 50)  # Default to 50 if not provided
+        max_n_estimators = request.form.get('n_estimators', 50)
 
         try:
             learning_rate = float(learning_rate)
             max_n_estimators = int(max_n_estimators)
         except ValueError:
             flash("Please provide valid numbers for learning rate and number of estimators.", "danger")
-            return redirect(url_for('train_model'))
+            return render_template("train.html", title="Train Model", columns=columns)
 
-        if target_column is None:
-            flash("Please select a target column.", "danger")
-            return redirect(url_for('train_model'))
+        if target_column not in columns:
+            flash("Please select a valid target column.", "danger")
+            return render_template("train.html", title="Train Model", columns=columns)
 
+        # Split data
         X = preprocessed_data.drop(target_column, axis=1)
         y = preprocessed_data[target_column]
-
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Finding the best n_estimators from 1 to max_n_estimators
+        # Hyperparameter tuning
         best_accuracy = 0
-        best_n_estimators = 1
         evaluation_metrics = {}
 
-        for n_estimators in range(1, max_n_estimators + 1):  # Iterate from 1 to the user-specified max
+        for n_estimators in range(1, max_n_estimators + 1):
             temp_model = AdaBoostClassifier(learning_rate=learning_rate, n_estimators=n_estimators)
             temp_model.fit(X_train, y_train)
             temp_predictions = temp_model.predict(X_test)
@@ -241,7 +243,6 @@ def train_model():
             if temp_accuracy > best_accuracy:
                 best_accuracy = temp_accuracy
                 best_n_estimators = n_estimators
-                # Save the best model and predictions
                 model = temp_model
                 predictions = temp_predictions
                 accuracy = best_accuracy
@@ -249,14 +250,18 @@ def train_model():
                 evaluation_metrics['recall'] = recall_score(y_test, predictions, average='weighted')
 
         # Save evaluation results
-        evaluation['accuracy'] = best_accuracy
-        evaluation['precision'] = evaluation_metrics['precision']
-        evaluation['recall'] = evaluation_metrics['recall']
+        evaluation = {
+            'accuracy': best_accuracy,
+            'precision': evaluation_metrics['precision'],
+            'recall': evaluation_metrics['recall'],
+        }
 
-        flash(f"Training complete. Best n_estimators: {best_n_estimators}, Accuracy: {best_accuracy:.2f}", "success")
+        # flash(f"Training complete! Best n_estimators: {best_n_estimators}, Accuracy: {best_accuracy:.2f}", "success")
         return redirect(url_for('post_training'))
 
+    # Render the training page for GET requests
     return render_template("train.html", title="Train Model", columns=columns)
+
 
 
 @app.route('/post_training', methods=['GET', 'POST'])
