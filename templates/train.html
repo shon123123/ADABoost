@@ -5,22 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/train_model.css') }}"> <!-- Link to the new CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/train_model.css') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
     <div class="container mt-5">
         <h2>Select Target Column and Train Model</h2>
         <form method="POST" class="mt-4">
-            <!-- Dropdown for Target Column Selection -->
-            <!-- <div class="form-group">
-                <label for="target_column">Select Target Column:</label>
-                <select name="target_column" id="target_column" class="form-control" required>
-                    {% for column in columns %}
-                        <option value="{{ column }}">{{ column }}</option>
-                    {% endfor %}
+
+            <!-- Training Mode Selection -->
+            <div class="form-group">
+                <label>Training Mode:</label>
+                <div class="form-check">
+                    <input type="radio" name="training_mode" id="without_optimization" value="without_optimization" class="form-check-input" checked>
+                    <label for="without_optimization" class="form-check-label">Without Optimization</label>
+                </div>
+                <div class="form-check">
+                    <input type="radio" name="training_mode" id="with_optimization" value="with_optimization" class="form-check-input">
+                    <label for="with_optimization" class="form-check-label">With Optimization</label>
+                </div>
+            </div>
+
+            <!-- Optimization Method Selection (Hidden by Default) -->
+            <div class="form-group" id="optimization_options" style="display: none;">
+                <label for="optimization_method">Optimization Method:</label>
+                <select name="optimization_method" id="optimization_method" class="form-control">
+                    <option value="grid_search">Grid Search</option>
+                    <option value="random_search">Random Search</option>
                 </select>
-            </div> -->
+            </div>
 
             <!-- Inputs for Model Parameters -->
             <div class="form-group">
@@ -36,5 +49,21 @@
             <button type="submit" class="btn btn-primary">Train Model</button>
         </form>
     </div>
+
+    <script>
+        // Toggle visibility of optimization options based on training mode selection
+        const trainingModeInputs = document.querySelectorAll('input[name="training_mode"]');
+        const optimizationOptions = document.getElementById('optimization_options');
+
+        trainingModeInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                if (input.value === 'with_optimization') {
+                    optimizationOptions.style.display = 'block';
+                } else {
+                    optimizationOptions.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -59,7 +59,7 @@ def preprocess_data():
         return redirect(url_for('upload_data'))
 
     if request.method == 'POST':
-        target_column = request.form.get('target_column')  # Get the target column from the form
+        target_column = request.form.get('target_column')  # Get  target column from the form
         columns_to_remove = request.form.getlist('columns_to_remove')
         missing_strategy = request.form.get('missing_strategy')
         scaling_method = request.form.get('scaling_method')
@@ -211,6 +211,7 @@ def train_model():
 
     if request.method == 'POST':
         # Retrieve user inputs
+        training_mode = request.form.get('training_mode', 'without_optimization')  # Optimization mode selection
         learning_rate = request.form.get('learning_rate', 1.0)
         max_n_estimators = request.form.get('n_estimators', 50)
 
@@ -230,33 +231,73 @@ def train_model():
         y = preprocessed_data[target_column]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Hyperparameter tuning
-        best_accuracy = 0
-        evaluation_metrics = {}
+        if training_mode == 'without_optimization':
+            # Train without optimization
+            best_accuracy = 0
+            evaluation_metrics = {}
 
-        for n_estimators in range(1, max_n_estimators + 1):
-            temp_model = AdaBoostClassifier(learning_rate=learning_rate, n_estimators=n_estimators)
-            temp_model.fit(X_train, y_train)
-            temp_predictions = temp_model.predict(X_test)
-            temp_accuracy = accuracy_score(y_test, temp_predictions)
+            for n_estimators in range(1, max_n_estimators + 1):
+                temp_model = AdaBoostClassifier(learning_rate=learning_rate, n_estimators=n_estimators)
+                temp_model.fit(X_train, y_train)
+                temp_predictions = temp_model.predict(X_test)
+                temp_accuracy = accuracy_score(y_test, temp_predictions)
 
-            if temp_accuracy > best_accuracy:
-                best_accuracy = temp_accuracy
-                best_n_estimators = n_estimators
-                model = temp_model
-                predictions = temp_predictions
-                accuracy = best_accuracy
-                evaluation_metrics['precision'] = precision_score(y_test, predictions, average='weighted')
-                evaluation_metrics['recall'] = recall_score(y_test, predictions, average='weighted')
+                if temp_accuracy > best_accuracy:
+                    best_accuracy = temp_accuracy
+                    best_n_estimators = n_estimators
+                    model = temp_model
+                    predictions = temp_predictions
+                    accuracy = best_accuracy
+                    evaluation_metrics['precision'] = precision_score(y_test, predictions, average='weighted')
+                    evaluation_metrics['recall'] = recall_score(y_test, predictions, average='weighted')
 
-        # Save evaluation results
-        evaluation = {
-            'accuracy': best_accuracy,
-            'precision': evaluation_metrics['precision'],
-            'recall': evaluation_metrics['recall'],
-        }
+            # Save evaluation results
+            evaluation = {
+                'accuracy': best_accuracy,
+                'precision': evaluation_metrics['precision'],
+                'recall': evaluation_metrics['recall'],
+            }
 
-        # flash(f"Training complete! Best n_estimators: {best_n_estimators}, Accuracy: {best_accuracy:.2f}", "success")
+        elif training_mode == 'with_optimization':
+            # Retrieve optimization method
+            optimization_method = request.form.get('optimization_method', 'grid_search')
+
+            if optimization_method == 'grid_search':
+                # Grid Search optimization
+                from sklearn.model_selection import GridSearchCV
+                param_grid = {
+                    'n_estimators': range(1, max_n_estimators + 1),
+                    'learning_rate': [0.01, 0.1, 1.0]
+                }
+                grid_search = GridSearchCV(AdaBoostClassifier(), param_grid, cv=3, scoring='accuracy')
+                grid_search.fit(X_train, y_train)
+                model = grid_search.best_estimator_
+                best_n_estimators = grid_search.best_params_['n_estimators']
+                predictions = model.predict(X_test)
+                accuracy = accuracy_score(y_test, predictions)
+
+            elif optimization_method == 'random_search':
+                # Random Search optimization
+                from sklearn.model_selection import RandomizedSearchCV
+                from scipy.stats import uniform
+                param_distributions = {
+                    'n_estimators': range(1, max_n_estimators + 1),
+                    'learning_rate': uniform(0.01, 1.0)
+                }
+                random_search = RandomizedSearchCV(AdaBoostClassifier(), param_distributions, n_iter=10, cv=3, scoring='accuracy', random_state=42)
+                random_search.fit(X_train, y_train)
+                model = random_search.best_estimator_
+                best_n_estimators = random_search.best_params_['n_estimators']
+                predictions = model.predict(X_test)
+                accuracy = accuracy_score(y_test, predictions)
+
+            # Save evaluation results
+            evaluation = {
+                'accuracy': accuracy,
+                'precision': precision_score(y_test, predictions, average='weighted'),
+                'recall': recall_score(y_test, predictions, average='weighted'),
+            }
+
         return redirect(url_for('post_training'))
 
     # Render the training page for GET requests
@@ -267,7 +308,7 @@ def train_model():
 @app.route('/post_training', methods=['GET', 'POST'])
 def post_training():
     global y_test, predictions, model, X_test,accuracy,best_n_estimators
-    flash(best_n_estimators)
+    # flash(best_n_estimators)
     print("<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>")
     print(best_n_estimators)
     print("<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>")
@@ -349,5 +390,4 @@ def post_training():
     )
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+ 
